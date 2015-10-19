@@ -36,41 +36,93 @@
 
         <!-- Latest compiled and minified JavaScript -->
         <script src="js/bootstrap.min.js"></script>
-        <title>Yoroshiku Onegaishimasu</title>
+        <title>PhoneGrid</title>
     </head>
     <body>
         <div class="app">
-            <h1>CAMERA APP</h1>
-            <img id="my-photo" style="height: 80vw; width: 80vw;" src="img/logo.png">
-            <br/>
-            <!--<div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">LUAN LUAN LUAN EH</p>
-            </div>-->
-            
-            <button onclick="return takePicture();" class="btn btn-primary">Take Picture</button>
+            <h2>Phone Grid</h2>
+            <button onclick="return findContacts();" class="btn btn-primary">Show Contacts</button>
+            <button onclick="location.href = 'camera.html';" class="btn btn-default">Take Photo</button>
+            <div id="placeholder"></div>
+            <progress style="display: none; margin-top: 200px;" id="progress"></progress>
         </div>
+        
+        
+        
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript">
             app.initialize();
             
-            function takePicture()
+            var placeholder = document.getElementById("placeholder");
+            var progress = document.getElementById("progress");
+            
+            function findContacts()
             {
-                navigator.camera.getPicture(onSuccess, onFail, { quality: 50,
-                    destinationType: Camera.DestinationType.DATA_URL
-                });
-                return true;
+                progress.style.display = 'block';
+                
+                var options      = new ContactFindOptions();
+                options.filter   = "";
+                options.multiple = true;
+                options.limit = 100;
+                var fields = ["displayName", "photos"];
+                
+                navigator.contacts.find(fields, onSuccess, onError, options);    
             }
             
-            function onSuccess(imageData) {
-                var image = document.getElementById('my-photo');
-                image.src = "data:image/jpeg;base64," + imageData;
+            function onSuccess(contacts)
+            {
+                placeholder.appendChild(populateContacts(contacts));
+                progress.style.display = 'none';
+            };
+            
+            function populateContacts(contacts)
+            {
+                var grid = document.createElement('div');
+                grid.style.width = '100vw';
+                var row = null;
+                         
+                for(var i = 0; i < contacts.length; i++)
+                {
+                    if (i % 3 == 0)
+                    {
+                        if (row != null)
+                        {
+                            grid.appendChild(row);
+                        }
+                        
+                        row = document.createElement('div');
+                        row.className = 'row';
+                        row.style.height = '30vh';
+                    }
+                    
+                    var column = document.createElement('div');
+                    column.className = 'col-xs-4';
+                    column.style['word-wrap'] = 'break-word';
+                    
+                    if (contacts[i].photos)
+                    {
+                        // var icon = document.createElement('img'); 
+                        // icon.src = contacts[i].photos[0];
+                        var icon = document.createTextNode(contacts[i].photos[0])
+                        column.appendChild(icon);
+                    }
+                    else
+                    {
+                        column.appendChild(document.createTextNode(contacts[i].displayName));    
+                    }
+                    
+                    row.appendChild(column);
+                }
+            
+                return grid;
             }
             
-            function onFail(message) {
-                alert('Failed because: ' + message);
-            }
+            function onError(contactError)
+            {
+                alert('Error when retrieving contacts!');
+            };
+            
         </script>
     </body>
 </html>
